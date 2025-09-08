@@ -1,537 +1,130 @@
+<!--
+  Name: Ruot Gal
+  Class: ISQA 4900 – Full Stack Application Development
+  Date: September 2025
+  Activity 3 – Display, Search, and Filter Data with Vue
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alumni Search and Filter Application</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .filter-section {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 2px solid #dee2e6;
-        }
-
-        .filter-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        select, input {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        select {
-            min-width: 120px;
-        }
-
-        input[type="text"] {
-            min-width: 200px;
-        }
-
-        .clear-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .clear-btn:hover {
-            background-color: #c82333;
-        }
-
-        .results-info {
-            margin: 15px 0;
-            font-weight: bold;
-            color: #495057;
-        }
-
-        .alumni-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .alumni-table th,
-        .alumni-table td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
-            text-align: left;
-        }
-
-        .alumni-table th {
-            background-color: #e9ecef;
-            font-weight: bold;
-            color: #495057;
-        }
-
-        .alumni-table tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        .alumni-table tr:hover {
-            background-color: #e3f2fd;
-        }
-
-        .donor-yes {
-            color: #28a745;
-            font-weight: bold;
-        }
-
-        .donor-no {
-            color: #dc3545;
-            font-weight: bold;
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-            font-style: italic;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Alumni Search and Filter</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h1 { text-align: center; }
+    .filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    label { font-size: 14px; }
+    input, select { padding: 6px; width: 100%; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    tr:nth-child(even) { background: #f5f5f5; }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <div class="container">
-            <!-- Header -->
-            <h1>University Alumni Database</h1>
+  <div id="app">
+    <h1>University Alumni Directory</h1>
 
-            <!-- Filter Section -->
-            <div class="filter-section">
-                <h3>Search and Filter Alumni</h3>
-                <div class="filter-controls">
-                    <label for="field-select">Field:</label>
-                    <select id="field-select" v-model="selectedField">
-                        <option value="">Disable filters</option>
-                        <option value="student_id">Student ID</option>
-                        <option value="first_name">First Name</option>
-                        <option value="last_name">Last Name</option>
-                        <option value="address">Address</option>
-                        <option value="city">City</option>
-                        <option value="state">State</option>
-                        <option value="zip">Zip Code</option>
-                        <option value="donor">Donor Status</option>
-                    </select>
-
-                    <label for="query-input">Query:</label>
-                    <input
-                        id="query-input"
-                        type="text"
-                        v-model="searchQuery"
-                        placeholder="Enter search term..."
-                        :disabled="!selectedField"
-                    >
-
-                    <button class="clear-btn" @click="clearFilters">Clear Filters</button>
-                </div>
-            </div>
-
-            <!-- Results Info -->
-            <div class="results-info">
-                Showing {{ filteredAlumni.length }} of {{ alumni.length }} alumni records
-            </div>
-
-            <!-- Alumni Table -->
-            <div v-if="filteredAlumni.length > 0">
-                <table class="alumni-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Address</th>
-                            <th>City</th>
-                            <th>State</th>
-                            <th>Zip</th>
-                            <th>Donor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="person in filteredAlumni" :key="person.student_id">
-                            <td>{{ person.student_id }}</td>
-                            <td>{{ person.first_name }}</td>
-                            <td>{{ person.last_name }}</td>
-                            <td>{{ person.address }}</td>
-                            <td>{{ person.city }}</td>
-                            <td>{{ person.state }}</td>
-                            <td>{{ person.zip }}</td>
-                            <td :class="person.donor ? 'donor-yes' : 'donor-no'">
-                                {{ person.donor ? 'Yes' : 'No' }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- No Results Message -->
-            <div v-else class="no-results">
-                <h3>No alumni found matching your search criteria.</h3>
-                <p>Try adjusting your search terms or clearing the filters.</p>
-            </div>
-        </div>
+    <!-- Filter Form -->
+    <div class="filters">
+      <label>Student ID <input v-model="q.student_id" placeholder="e.g. 101"></label>
+      <label>First Name <input v-model="q.first_name" placeholder="e.g. James"></label>
+      <label>Last Name <input v-model="q.last_name" placeholder="e.g. Butler"></label>
+      <label>Address <input v-model="q.address" placeholder="Street"></label>
+      <label>City <input v-model="q.city" placeholder="City"></label>
+      <label>State <input v-model="q.state" placeholder="State"></label>
+      <label>Zip Code <input v-model="q.zip" placeholder="Zip"></label>
+      <label>Donor
+        <select v-model="q.donor">
+          <option value="">(Any)</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </label>
     </div>
 
-    <script>
-        // Alumni data from the JSON file
-        const alumniData = [
-            {
-                "student_id": 101,
-                "first_name": "James",
-                "last_name": "Butler",
-                "address": "6649 N Blue Gum St",
-                "city": "New Orleans",
-                "state": "LA",
-                "zip": 70116,
-                "donor": false
-            },
-            {
-                "student_id": 102,
-                "first_name": "Josephine",
-                "last_name": "Darakjy",
-                "address": "4 B Blue Ridge Blvd",
-                "city": "Brighton",
-                "state": "MI",
-                "zip": 48116,
-                "donor": true
-            },
-            {
-                "student_id": 103,
-                "first_name": "Art",
-                "last_name": "Venere",
-                "address": "8 W Cerritos Ave #54",
-                "city": "Bridgeport",
-                "state": "NJ",
-                "zip": 8014,
-                "donor": true
-            },
-            {
-                "student_id": 104,
-                "first_name": "Lenna",
-                "last_name": "Paprocki",
-                "address": "639 Main St",
-                "city": "Anchorage",
-                "state": "AK",
-                "zip": 99501,
-                "donor": true
-            },
-            {
-                "student_id": 105,
-                "first_name": "Donette",
-                "last_name": "Foller",
-                "address": "34 Center St",
-                "city": "Hamilton",
-                "state": "OH",
-                "zip": 45011,
-                "donor": true
-            },
-            {
-                "student_id": 106,
-                "first_name": "Simona",
-                "last_name": "Morasca",
-                "address": "3 Mcauley Dr",
-                "city": "Ashland",
-                "state": "OH",
-                "zip": 44805,
-                "donor": true
-            },
-            {
-                "student_id": 107,
-                "first_name": "Mitsue",
-                "last_name": "Tollner",
-                "address": "7 Eads St",
-                "city": "Chicago",
-                "state": "IL",
-                "zip": 60632,
-                "donor": false
-            },
-            {
-                "student_id": 108,
-                "first_name": "Leota",
-                "last_name": "Dilliard",
-                "address": "7 W Jackson Blvd",
-                "city": "San Jose",
-                "state": "CA",
-                "zip": 95111,
-                "donor": true
-            },
-            {
-                "student_id": 109,
-                "first_name": "Sage",
-                "last_name": "Wieser",
-                "address": "5 Boston Ave #88",
-                "city": "Sioux Falls",
-                "state": "SD",
-                "zip": 57105,
-                "donor": true
-            },
-            {
-                "student_id": 110,
-                "first_name": "Kris",
-                "last_name": "Marrier",
-                "address": "228 Runamuck Pl #2808",
-                "city": "Baltimore",
-                "state": "MD",
-                "zip": 21224,
-                "donor": true
-            },
-            {
-                "student_id": 111,
-                "first_name": "Minna",
-                "last_name": "Amigon",
-                "address": "2371 Jerrold Ave",
-                "city": "Kulpsville",
-                "state": "PA",
-                "zip": 19443,
-                "donor": false
-            },
-            {
-                "student_id": 112,
-                "first_name": "Abel",
-                "last_name": "Maclead",
-                "address": "37275 St  Rt 17m M",
-                "city": "Middle Island",
-                "state": "NY",
-                "zip": 11953,
-                "donor": true
-            },
-            {
-                "student_id": 113,
-                "first_name": "Kiley",
-                "last_name": "Caldarera",
-                "address": "25 E 75th St #69",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zip": 90034,
-                "donor": true
-            },
-            {
-                "student_id": 114,
-                "first_name": "Graciela",
-                "last_name": "Ruta",
-                "address": "98 Connecticut Ave Nw",
-                "city": "Chagrin Falls",
-                "state": "OH",
-                "zip": 44023,
-                "donor": true
-            },
-            {
-                "student_id": 115,
-                "first_name": "Cammy",
-                "last_name": "Albares",
-                "address": "56 E Morehead St",
-                "city": "Laredo",
-                "state": "TX",
-                "zip": 78045,
-                "donor": true
-            },
-            {
-                "student_id": 116,
-                "first_name": "Mattie",
-                "last_name": "Poquette",
-                "address": "73 State Road 434 E",
-                "city": "Phoenix",
-                "state": "AZ",
-                "zip": 85013,
-                "donor": true
-            },
-            {
-                "student_id": 117,
-                "first_name": "Meaghan",
-                "last_name": "Garufi",
-                "address": "69734 E Carrillo St",
-                "city": "Mc Minnville",
-                "state": "TN",
-                "zip": 37110,
-                "donor": false
-            },
-            {
-                "student_id": 118,
-                "first_name": "Gladys",
-                "last_name": "Rim",
-                "address": "322 New Horizon Blvd",
-                "city": "Milwaukee",
-                "state": "WI",
-                "zip": 53207,
-                "donor": true
-            },
-            {
-                "student_id": 119,
-                "first_name": "Yuki",
-                "last_name": "Whobrey",
-                "address": "1 State Route 27",
-                "city": "Taylor",
-                "state": "MI",
-                "zip": 48180,
-                "donor": true
-            },
-            {
-                "student_id": 120,
-                "first_name": "Fletcher",
-                "last_name": "Flosi",
-                "address": "394 Manchester Blvd",
-                "city": "Rockford",
-                "state": "IL",
-                "zip": 61109,
-                "donor": true
-            },
-            {
-                "student_id": 121,
-                "first_name": "Bette",
-                "last_name": "Nicka",
-                "address": "6 S 33rd St",
-                "city": "Aston",
-                "state": "PA",
-                "zip": 19014,
-                "donor": true
-            },
-            {
-                "student_id": 122,
-                "first_name": "Veronika",
-                "last_name": "Inouye",
-                "address": "6 Greenleaf Ave",
-                "city": "San Jose",
-                "state": "CA",
-                "zip": 95111,
-                "donor": true
-            },
-            {
-                "student_id": 123,
-                "first_name": "Willard",
-                "last_name": "Kolmetz",
-                "address": "618 W Yakima Ave",
-                "city": "Irving",
-                "state": "TX",
-                "zip": 75062,
-                "donor": true
-            },
-            {
-                "student_id": 124,
-                "first_name": "Maryann",
-                "last_name": "Royster",
-                "address": "74 S Westgate St",
-                "city": "Albany",
-                "state": "NY",
-                "zip": 12204,
-                "donor": true
-            },
-            {
-                "student_id": 125,
-                "first_name": "Alisha",
-                "last_name": "Slusarski",
-                "address": "3273 State St",
-                "city": "Middlesex",
-                "state": "NJ",
-                "zip": 8846,
-                "donor": true
+    <p>Showing {{ filtered.length }} of {{ alumni.length }} records</p>
+
+    <!-- Table Display -->
+    <table v-if="filtered.length > 0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>First</th>
+          <th>Last</th>
+          <th>Address</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Zip</th>
+          <th>Donor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="person in filtered" :key="person.student_id">
+          <td>{{ person.student_id }}</td>
+          <td>{{ person.first_name }}</td>
+          <td>{{ person.last_name }}</td>
+          <td>{{ person.address }}</td>
+          <td>{{ person.city }}</td>
+          <td>{{ person.state }}</td>
+          <td>{{ person.zip }}</td>
+          <td>{{ donorStatus(person.donor) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div v-else>
+      <p>No records found. Try adjusting your filters.</p>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          alumni: [],
+          q: { student_id: "", first_name: "", last_name: "", address: "",
+               city: "", state: "", zip: "", donor: "" }
+        };
+      },
+      computed: {
+        filtered() {
+          return this.alumni.filter(p => {
+            const match = (field, value) => {
+              if (!value) return true;
+              return String(p[field]).toLowerCase().includes(value.toLowerCase());
+            };
+            const idOk    = match("student_id", this.q.student_id);
+            const firstOk = match("first_name", this.q.first_name);
+            const lastOk  = match("last_name", this.q.last_name);
+            const addrOk  = match("address", this.q.address);
+            const cityOk  = match("city", this.q.city);
+            const stateOk = match("state", this.q.state);
+            const zipOk   = match("zip", this.q.zip);
+
+            let donorOk = true;
+            if (this.q.donor !== "") {
+              donorOk = String(p.donor) === this.q.donor;
             }
-        ];
-
-        // Create Vue application
-        const { createApp } = Vue;
-
-        createApp({
-            data() {
-                return {
-                    // Alumni data array
-                    alumni: alumniData,
-                    // Filter controls
-                    filterField: '',
-                    filterQuery: '',
-                    filterDonorState: ''
-                };
-            },
-            computed: {
-                // Filtered alumni based on selected field and search query
-                filteredAlumni() {
-                    return this.alumni;
-                }
-            },
-            methods: {
-                // Method for displaying donor status similar to tutorial's activeStatus method
-                donorStatus(person) {
-                    return person.donor ? 'Yes' : 'No';
-                },
-
-                // Filter method following tutorial pattern
-                filterRow(person) {
-                    let result = true;
-
-                    if (this.filterField) {
-                        if (this.filterField === 'donor') {
-                            // Handle donor status filtering with radio buttons
-                            if (this.filterDonorState !== '') {
-                                const donorBoolean = this.filterDonorState === 'true';
-                                result = person.donor === donorBoolean;
-                            }
-                        } else {
-                            // Handle text-based filtering for other fields
-                            if (this.filterQuery.trim()) {
-                                const query = this.filterQuery.toLowerCase().trim();
-                                const fieldValue = person[this.filterField];
-
-                                if (typeof fieldValue === 'number') {
-                                    result = fieldValue.toString().includes(query);
-                                } else {
-                                    result = fieldValue.toLowerCase().includes(query);
-                                }
-                            }
-                        }
-                    }
-
-                    return result;
-                },
-
-                // Clear all filters and reset the form
-                clearFilters() {
-                    this.filterField = '';
-                    this.filterQuery = '';
-                    this.filterDonorState = '';
-                }
-            },
-            watch: {
-                // Clear search query when field changes to empty or donor
-                filterField(newValue) {
-                    if (!newValue || newValue === 'donor') {
-                        this.filterQuery = '';
-                    }
-                    if (newValue !== 'donor') {
-                        this.filterDonorState = '';
-                    }
-                }
-            }
-        }).mount('#app');
-    </script>
+            return idOk && firstOk && lastOk && addrOk && cityOk && stateOk && zipOk && donorOk;
+          });
+        }
+      },
+      methods: {
+        donorStatus(val) { return val ? "Yes" : "No"; }
+      },
+      mounted() {
+        // load alumni.json
+        fetch("alumni.json")
+          .then(r => r.json())
+          .then(data => { this.alumni = data; })
+          .catch(err => console.error("Error loading JSON", err));
+      }
+    }).mount("#app");
+  </script>
 </body>
 </html>
