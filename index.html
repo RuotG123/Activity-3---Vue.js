@@ -118,7 +118,6 @@
         donorStatus(val) { return val ? "Yes" : "No"; }
       },
       mounted() {
-        // load alumni.json
         fetch("alumni.json")
           .then(r => r.json())
           .then(data => { this.alumni = data; })
